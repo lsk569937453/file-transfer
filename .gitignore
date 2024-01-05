@@ -37,10 +37,10 @@ config.stamp
 no_llvm_build
 
 # exclude everything
-public/*
+backend/public/*
 
 # exception to the rule
-!public/.gitkeep 
+!backend/public/.gitkeep 
 target/
 ## Build
 /dl/
