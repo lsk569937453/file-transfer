@@ -36,6 +36,12 @@ config.mk
 config.stamp
 no_llvm_build
 
+# exclude everything
+public/*
+
+# exception to the rule
+!public/.gitkeep 
+target/
 ## Build
 /dl/
 /doc/
@@ -52,7 +58,6 @@ build/
 /src/tools/x/target
 # Created by default with `src/ci/docker/run.sh`
 /obj/
-static/
 ## Temporary files
 *~
 \#*
@@ -72,8 +77,7 @@ __pycache__/
 
 ## Node
 node_modules
-package-lock.json
-package.json
+
 
 ## Rustdoc GUI tests
 tests/rustdoc-gui/src/**.lock
