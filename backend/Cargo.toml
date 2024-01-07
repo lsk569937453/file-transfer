@@ -11,10 +11,18 @@ actix-files = "0.6.2"
 futures = "0.3.30"
 bytes = "1.5.0"
 env_logger = "0.10.1"
-serde = "1.0.101"
+serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0.41"
 serde_derive = "1.0.101"
 json = "0.12.0"
 console = "0.15.0"
 rust-embed = "8.2.0"
 mime_guess = { version = "2"}
+anyhow = "1.0"
+sqlx = { version = "0.7", features = [ "runtime-tokio","sqlite" ] }
+dirs = "5.0"
+log = "^0.4"
+tokio = { version = "1.27.0",  features = ["full", "tracing"] }
+actix-cors="0.7.0"
+human_bytes = "0.4"
+chrono = "0.4.31"
