@@ -25,7 +25,7 @@ export default function DownloadPage() {
 
   }, [])
   const getBaseUrl=()=>{
-    return import.meta.env.PROD	?window.location.origin + "/api" : "http://localhost:8000/api"
+    return import.meta.env.PROD	?window.location.origin + "/api" : "http://localhost:8345/api"
   }
   const loadPage = async () => {
     let finalPath = "";

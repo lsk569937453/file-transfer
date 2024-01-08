@@ -9,6 +9,7 @@ import {
 } from "react-router-dom";
 import DownloadPage from "./downloadPage.jsx";
 import UploadPage from './uploadPage.jsx'
+import SettingPage from './settingPage.jsx'
 const router = createBrowserRouter([
   {
     path: "/",
@@ -25,6 +26,10 @@ const router = createBrowserRouter([
       {
         path: "/uploadPage",
         element: <UploadPage />,
+      },
+      {
+        path: "/settingPage",
+        element: <SettingPage />,
       },
     ],
   },
