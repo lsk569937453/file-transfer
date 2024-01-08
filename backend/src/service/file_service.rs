@@ -3,7 +3,11 @@ use std::path::PathBuf;
 use std::vec;
 
 use crate::vojo::base_response::BaseResponse;
+use crate::vojo::common_error::CommonError;
 use crate::vojo::get_path_res::FileInfo;
+use actix_files::NamedFile;
+use actix_web::error::DispatchError::InternalError;
+use actix_web::http::Error;
 use actix_web::HttpRequest;
 use actix_web::{error, get, put, web, App, HttpResponse, HttpServer, Responder};
 use chrono::offset::Utc;
@@ -60,12 +64,9 @@ async fn get_path_with_error(
         Err(e) => String::from(""),
     };
     info!("webpath is {}", web_path);
-    let sqlite_row = sqlx::query(
-        "
-    select *from config",
-    )
-    .fetch_one(conn.as_ref())
-    .await?;
+    let sqlite_row = sqlx::query("select *from config")
+        .fetch_one(conn.as_ref())
+        .await?;
     let config_root_path = sqlite_row.get::<String, _>("config_value");
     let web_path_items = web_path.split(',').collect::<PathBuf>();
     let final_path = PathBuf::new().join(config_root_path).join(web_path_items);
@@ -130,4 +131,32 @@ async fn set_root_path_with_error(
     .execute(conn.as_ref())
     .await?;
     Ok(())
+}
+#[get("/download")]
+pub async fn download_file(
+    req: HttpRequest,
+    conn: web::Data<Pool<Sqlite>>,
+) -> Result<HttpResponse, actix_web::Error> {
+    info!("req: {:?}", req.query_string());
+
+    let res = download_file_with_error(conn, req)
+        .await
+        .map_err(|e| CommonError::from(e))?;
+
+    Ok(res)
+}
+async fn download_file_with_error(
+    conn: web::Data<Pool<Sqlite>>,
+    req: HttpRequest,
+) -> Result<HttpResponse, anyhow::Error> {
+    let query_result = web::Query::<Params>::from_query(req.query_string())?;
+    let web_path_items = query_result.path.split(",").collect::<PathBuf>();
+    let sqlite_row = sqlx::query("select *from config")
+        .fetch_one(conn.as_ref())
+        .await?;
+    let config_root_path = sqlite_row.get::<String, _>("config_value");
+    let final_path = PathBuf::new().join(config_root_path).join(web_path_items);
+    let istream = NamedFile::open_async(final_path).await?;
+    let res = istream.into_response(&req);
+    Ok(res)
 }

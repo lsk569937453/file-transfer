@@ -1,6 +1,6 @@
 use core::fmt;
 #[derive(Debug)]
-struct CommonError {
+pub struct CommonError {
     err: anyhow::Error,
 }
 impl actix_web::error::ResponseError for CommonError {

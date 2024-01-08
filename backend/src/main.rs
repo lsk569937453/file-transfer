@@ -9,8 +9,9 @@ extern crate anyhow;
 #[macro_use]
 extern crate log;
 use actix_cors::Cors;
-use service::file_service::{get_path, set_root_path};
+use service::file_service::{download_file, get_path, set_root_path};
 use service::sqlite::init;
+
 #[derive(RustEmbed)]
 #[folder = "public"]
 struct Asset;
@@ -53,7 +54,12 @@ async fn main_with_error() -> Result<(), anyhow::Error> {
             .wrap(middleware::Logger::default())
             .wrap(corss)
             .app_data(web::Data::new(sqlite_pool.clone()))
-            .service(web::scope("/api").service(get_path).service(set_root_path))
+            .service(
+                web::scope("/api")
+                    .service(get_path)
+                    .service(download_file)
+                    .service(set_root_path),
+            )
             .service(index)
             .service(dist)
     })
