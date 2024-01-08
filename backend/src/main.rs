@@ -9,6 +9,7 @@ extern crate anyhow;
 #[macro_use]
 extern crate log;
 use actix_cors::Cors;
+use local_ip_address::local_ip;
 use service::file_service::{download_file, get_path, set_root_path};
 use service::sqlite::init;
 
@@ -52,9 +53,11 @@ async fn main() {
 }
 async fn main_with_error() -> Result<(), anyhow::Error> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
-    qr2term::print_qr("https://rust-lang.org/").unwrap();
+    let ip = local_ip()?;
+    let origin = format!("http://{}:8345", ip);
+    qr2term::print_qr(&origin)?;
 
-    info!("Listening on http://127.0.0.1:8000");
+    info!("Listening on {}", origin);
     let sqlite_pool = init().await?;
 
     let _ = HttpServer::new(move || {
@@ -74,7 +77,7 @@ async fn main_with_error() -> Result<(), anyhow::Error> {
             .service(dist2)
             .service(index)
     })
-    .bind("0.0.0.0:8000")?
+    .bind("0.0.0.0:8345")?
     .run()
     .await;
     Ok(())
