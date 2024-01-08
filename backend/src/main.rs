@@ -25,16 +25,24 @@ fn handle_embedded_file(path: &str) -> HttpResponse {
     }
 }
 
-#[actix_web::get("/")]
+#[actix_web::get("/{_:.*}")]
 async fn index() -> impl Responder {
+    info!("request the index html");
     handle_embedded_file("index.html")
 }
 
-#[actix_web::get("/{_:.*}")]
-async fn dist(path: web::Path<String>) -> impl Responder {
+#[actix_web::get("/{_:.+\\.css}")]
+async fn dist1(path: web::Path<String>) -> impl Responder {
+    info!("request the css");
+
     handle_embedded_file(path.as_str())
 }
+#[actix_web::get("/{_:.+\\.js}")]
+async fn dist2(path: web::Path<String>) -> impl Responder {
+    info!("request the js");
 
+    handle_embedded_file(path.as_str())
+}
 #[actix_web::main]
 async fn main() {
     let res = main_with_error().await;
@@ -44,6 +52,8 @@ async fn main() {
 }
 async fn main_with_error() -> Result<(), anyhow::Error> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
+    qr2term::print_qr("https://rust-lang.org/").unwrap();
+
     info!("Listening on http://127.0.0.1:8000");
     let sqlite_pool = init().await?;
 
@@ -60,10 +70,11 @@ async fn main_with_error() -> Result<(), anyhow::Error> {
                     .service(download_file)
                     .service(set_root_path),
             )
+            .service(dist1)
+            .service(dist2)
             .service(index)
-            .service(dist)
     })
-    .bind("127.0.0.1:8000")?
+    .bind("0.0.0.0:8000")?
     .run()
     .await;
     Ok(())

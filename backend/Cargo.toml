@@ -26,3 +26,5 @@ tokio = { version = "1.27.0",  features = ["full", "tracing"] }
 actix-cors="0.7.0"
 human_bytes = "0.4"
 chrono = "0.4.31"
+local-ip-address = "0.5.6"
+qr2term="0.3.1"

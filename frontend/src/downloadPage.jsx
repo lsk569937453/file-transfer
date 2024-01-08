@@ -13,18 +13,20 @@ import {
 } from "@nextui-org/react";
 import { Link } from "@nextui-org/react";
 import { Outlet } from "react-router-dom";
-import api from './utli/axios'
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
+import axios from 'axios'
 
 export default function DownloadPage() {
   const navigate = useNavigate();
   let [searchParams, setSearchParams] = useSearchParams();
-
   const [data, setData] = useState([]);
   useEffect(() => {
-    loadPage()
-  }, [])
+    loadPage();
 
+  }, [])
+  const getBaseUrl=()=>{
+    return import.meta.env.PROD	?window.location.origin + "/api" : "http://localhost:8000/api"
+  }
   const loadPage = async () => {
     let finalPath = "";
     let path = searchParams.get("path");
@@ -33,7 +35,10 @@ export default function DownloadPage() {
     }
     console.log(searchParams);
     console.log("path is" + finalPath + ",current path is" + path);
-    const { response_code, response_msg } = (await api.get("/path" + finalPath)).data;
+    const { response_code, response_msg } = (await axios({
+      url: "/path" + finalPath, method: 'GET',
+      baseURL: getBaseUrl()
+    })).data;
 
     console.log(response_code);
     console.log(response_msg);
@@ -50,10 +55,11 @@ export default function DownloadPage() {
       navigate("/downloadPage?path=" + path);
       navigate(0);
     } else {
-      const path=searchParams.get("path") === null ? pathname : (searchParams.get("path") + "," + pathname);
-      const downloadPath="/download?path=" + path;
-      api({
+      const path = searchParams.get("path") === null ? pathname : (searchParams.get("path") + "," + pathname);
+      const downloadPath = "/download?path=" + path;
+      axios({
         url: downloadPath, //your url
+        baseURL:getBaseUrl(),
         method: 'GET',
         responseType: 'blob', // important
       }).then((response) => {
