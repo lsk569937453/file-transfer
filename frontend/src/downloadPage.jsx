@@ -15,7 +15,7 @@ import { Link } from "@nextui-org/react";
 import { Outlet } from "react-router-dom";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import axios from 'axios'
-
+import { getBaseUrl } from './utli/axios.js'
 export default function DownloadPage() {
   const navigate = useNavigate();
   let [searchParams, setSearchParams] = useSearchParams();
@@ -32,9 +32,7 @@ export default function DownloadPage() {
     
    
   },[location]);
-  const getBaseUrl=()=>{
-    return import.meta.env.PROD	?window.location.origin + "/api" : "http://localhost:8345/api"
-  }
+
   const loadPage = async () => {
     let finalPath = "";
     let path = searchParams.get("path");

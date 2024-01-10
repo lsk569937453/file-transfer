@@ -93,9 +93,9 @@ async fn get_path_with_error(
 #[put("/root_path")]
 pub async fn set_root_path(
     conn: web::Data<Pool<Sqlite>>,
-    req: HttpRequest,
+    req: web::Json<Params>,
 ) -> Result<String, actix_web::Error> {
-    let res = set_root_path_with_error(conn, req).await;
+    let res = set_root_path_with_error(conn, req.path.clone()).await;
     let res = match res {
         Ok(()) => {
             let base_res = BaseResponse {
@@ -117,10 +117,9 @@ pub async fn set_root_path(
 
 async fn set_root_path_with_error(
     conn: web::Data<Pool<Sqlite>>,
-    req: HttpRequest,
+    path: String,
 ) -> Result<(), anyhow::Error> {
-    let params = web::Query::<Params>::from_query(req.query_string())?;
-    let root_path = &params.path;
+    let root_path = path;
     let _ = sqlx::query("delete from config")
         .execute(conn.as_ref())
         .await?;
