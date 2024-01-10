@@ -10,7 +10,7 @@ extern crate anyhow;
 extern crate log;
 use actix_cors::Cors;
 use local_ip_address::local_ip;
-use service::file_service::{download_file, get_path, set_root_path};
+use service::file_service::{download_file, get_path, get_root_path, set_root_path};
 use service::sqlite::init;
 
 #[derive(RustEmbed)]
@@ -71,7 +71,8 @@ async fn main_with_error() -> Result<(), anyhow::Error> {
                 web::scope("/api")
                     .service(get_path)
                     .service(download_file)
-                    .service(set_root_path),
+                    .service(set_root_path)
+                    .service(get_root_path),
             )
             .service(dist1)
             .service(dist2)

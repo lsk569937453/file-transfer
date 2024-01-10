@@ -16,7 +16,7 @@ import SettingPage from './settingPage';
 import { NextUIProvider } from '@nextui-org/react';
 
 const headerdata = [
-  
+
   {
     id: "Computer",
     label: "Computer",
@@ -71,17 +71,20 @@ function App() {
           tab: "px-5 py-3 text-md font-bold justify-center",
           tabList: "w-full",
         }}
+          aria-label="Tabs colors"
+          color='primary'
+          
         >
           {(item) => (
-            <Tab key={item.id} title={item.label} href={item.link} />
+            <Tab key={item.id} title={item.label} href={item.link} index={item.id} />
           )}
         </Tabs>
       </div>
-        <Routes>
-          {router.map((item, index) => (
-            <Route path={item.path} element={item.element} />
-          ))}
-        </Routes>
+      <Routes>
+        {router.map((item, index) => (
+          <Route path={item.path} element={item.element} key={index} />
+        ))}
+      </Routes>
     </NextUIProvider>
     // <Page>
     //   <Navbar

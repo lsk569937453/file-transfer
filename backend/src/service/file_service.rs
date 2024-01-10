@@ -160,3 +160,36 @@ async fn download_file_with_error(
     let res = istream.into_response(&req);
     Ok(res)
 }
+#[get("/rootPath")]
+pub async fn get_root_path(
+    req: HttpRequest,
+    conn: web::Data<Pool<Sqlite>>,
+) -> Result<String, actix_web::Error> {
+    info!("req: {:?}", req.query_string());
+
+    let res = get_root_path_with_error(conn).await;
+    let data = match res {
+        Ok(r) => {
+            let res = BaseResponse {
+                response_code: 0,
+                response_msg: r,
+            };
+            serde_json::to_string(&res)
+        }
+        Err(e) => {
+            let res = BaseResponse {
+                response_code: 1,
+                response_msg: e.to_string(),
+            };
+            serde_json::to_string(&res)
+        }
+    }?;
+    Ok(data)
+}
+async fn get_root_path_with_error(conn: web::Data<Pool<Sqlite>>) -> Result<String, anyhow::Error> {
+    let sqlite_row = sqlx::query("select *from config")
+        .fetch_one(conn.as_ref())
+        .await?;
+    let config_root_path = sqlite_row.get::<String, _>("config_value");
+    Ok(config_root_path)
+}
