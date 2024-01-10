@@ -54,7 +54,7 @@ export default function DownloadPage() {
       setData(final);
     }
   }
-  const handleClick = (pathname, isDir) => {
+  const handleDownloadClick = (pathname, isDir) => {
     if (isDir) {
       console.log(pathname);
       const path = searchParams.get("path") === null ? pathname : (searchParams.get("path") + "," + pathname);
@@ -87,7 +87,6 @@ export default function DownloadPage() {
 
   };
   const handleReturnButtonClick = () => {
-
     const pathArray = searchParams.get("path").split(",");
     if (pathArray.length === 1) {
       navigate("/downloadPage");
@@ -110,7 +109,7 @@ export default function DownloadPage() {
         </div>
       }
       {data.map((item, index) => (
-        <div key={index} className='flex flex-row cursor-pointer' onClick={() => handleClick(item.file_name, item.is_dir)}>
+        <div key={index} className='flex flex-row cursor-pointer' onClick={() => handleDownloadClick(item.file_name, item.is_dir)}>
           <div className='basis-2/12'>
             {
               item.is_dir ?
