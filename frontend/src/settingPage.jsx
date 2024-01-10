@@ -1,16 +1,7 @@
 import { useState,useRef } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
-import {
-    Page,
-    Navbar,
-    NavbarBackLink,
-    Sheet,
-    Block,
-    Button,
-    Toolbar,
-    Link,
-  } from 'konsta/react';
+import { Button } from "@nextui-org/react";
 import { Outlet } from "react-router-dom";
 
 export default  function SettingPage() {
@@ -28,7 +19,7 @@ export default  function SettingPage() {
   }
   return (
     <>
-     <Block strongIos outlineIos className="space-y-4">
+     <div strongIos outlineIos className="space-y-4">
         <p>
           Sheet Modals slide up from the bottom of the screen to reveal more
           content. Such modals allow to create custom overlays with custom
@@ -42,7 +33,7 @@ export default  function SettingPage() {
         <input id="myInput" type="file" webkitdirectory directory multiple/>
 
 
-      </Block>
+      </div>
     </>
 
   )

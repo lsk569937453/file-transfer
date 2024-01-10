@@ -17,9 +17,6 @@ dependencies:
   framer-motion:
     specifier: ^10.17.9
     version: 10.17.9(react-dom@18.2.0)(react@18.2.0)
-  konsta:
-    specifier: ^3.1.2
-    version: 3.1.2
   localforage:
     specifier: ^1.10.0
     version: 1.10.0
@@ -4376,11 +4373,6 @@ packages:
     dependencies:
       json-buffer: 3.0.1
     dev: true
-
-  /konsta@3.1.2:
-    resolution: {integrity: sha512-Tle0sd+awLdJHeDaCDXjhcJdABauV6bUcWpFyJJGr8WcJbw8Klfdhwi6txam4ljggkuKtPtzictQwg9fdYUVBQ==}
-    engines: {node: '>= 4.7.0'}
-    dev: false
 
   /levn@0.4.1:
     resolution: {integrity: sha512-+bT2uH4E5LGE7h/n3evcS/sQlJXCpIp6ym8OWJ5eV6+67Dsql/LaaT7qJBAt2rzfoa/5QBGBhxDix1dMt2kQKQ==}

@@ -19,11 +19,19 @@ import axios from 'axios'
 export default function DownloadPage() {
   const navigate = useNavigate();
   let [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+
   const [data, setData] = useState([]);
   useEffect(() => {
     loadPage();
 
   }, [])
+  useEffect(()=>{
+
+   loadPage();
+    
+   
+  },[location]);
   const getBaseUrl=()=>{
     return import.meta.env.PROD	?window.location.origin + "/api" : "http://localhost:8345/api"
   }
@@ -53,7 +61,7 @@ export default function DownloadPage() {
       console.log(pathname);
       const path = searchParams.get("path") === null ? pathname : (searchParams.get("path") + "," + pathname);
       navigate("/downloadPage?path=" + path);
-      navigate(0);
+      // navigate(0);
     } else {
       const path = searchParams.get("path") === null ? pathname : (searchParams.get("path") + "," + pathname);
       const downloadPath = "/download?path=" + path;
