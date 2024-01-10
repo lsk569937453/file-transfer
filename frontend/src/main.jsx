@@ -12,7 +12,7 @@ import DownloadPage from "./downloadPage.jsx";
 import UploadPage from './uploadPage.jsx'
 import SettingPage from './settingPage.jsx'
 
-const router = createBrowserRouter([
+const router = createHashRouter([
   {
     path: "/",
     element: <DownloadPage />,

@@ -98,7 +98,6 @@ export default function DownloadPage() {
       const path = pathArray.join(",");
       navigate("/downloadPage?path=" + path);
     }
-    navigate(0);
   }
   return (
     <div className='flex flex-col overflow-auto p-5'>
