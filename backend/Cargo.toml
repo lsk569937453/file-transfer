@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 actix-web = "4.4.1"
+actix-multipart="0.6.1"
 actix-files = "0.6.2"
 futures = "0.3.30"
 bytes = "1.5.0"

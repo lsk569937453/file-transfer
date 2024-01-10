@@ -87,6 +87,22 @@ export default function UploadPage() {
   const handleDeleAllFilesButtonClick=()=>{
     setSelectedFiles([]);
   }
+  const handleUploadButtonClick=async ()=>{
+    var bodyFormData = new FormData();
+    selectedFiles.map((item,index)=>{
+      bodyFormData.append("file",item);
+    });
+    const { response_code, response_msg } = (await axios({
+      url: "/upload", method: 'POST',
+      data: bodyFormData,
+      headers: { "Content-Type": "multipart/form-data" },
+      baseURL: getBaseUrl()
+    })).data;
+    console.log(response_code);
+    console.log(response_msg);
+    if (response_code == 0) {
+    }
+  }
   return (
     <>
       <div className='flex flex-col gap-4 p-4'>
@@ -123,7 +139,7 @@ export default function UploadPage() {
             </Table>
             <div className='flex flex-row gap-4'>
               <Button className='basis-6/12' color="danger" onClick={handleDeleAllFilesButtonClick}>Delete All Files</Button>
-              <Button className='basis-6/12' color='primary'>Upload</Button>
+              <Button className='basis-6/12' color='primary' onClick={handleUploadButtonClick}>Upload</Button>
 
             </div>
           </div>

@@ -120,7 +120,7 @@ export default function DownloadPage() {
           </div>
           <div className='basis-10/12 flex flex-col gap-4'>
             <div className='basis-2/12 font-bold text-xl'>
-              {item.file_name.length < 10 ? item.file_name : item.file_name.slice(0, 10) + "..."}
+              {item.file_name.length < 20 ? item.file_name : item.file_name.slice(0, 20) + "..."}
             </div>
             <div className='basis-10/12 flex flex-row'>
               {
