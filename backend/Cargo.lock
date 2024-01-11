@@ -324,38 +324,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "backend"
-version = "0.1.0"
-dependencies = [
- "actix-cors",
- "anyhow",
- "axum",
- "bytes",
- "chrono",
- "console",
- "dirs",
- "env_logger",
- "futures",
- "http-body-util",
- "human_bytes",
- "hyper",
- "json",
- "local-ip-address",
- "log",
- "mime_guess",
- "new_mime_guess",
- "qr2term",
- "rust-embed",
- "serde",
- "serde_derive",
- "serde_json",
- "sqlx",
- "tokio",
- "tokio-util",
- "tower-http",
-]
-
-[[package]]
 name = "backtrace"
 version = "0.3.69"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -724,6 +692,38 @@ name = "fastrand"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "25cbce373ec4653f1a01a31e8a5e5ec0c622dc27ff9c4e6606eefef5cbbed4a5"
+
+[[package]]
+name = "file-transfer"
+version = "0.1.0"
+dependencies = [
+ "actix-cors",
+ "anyhow",
+ "axum",
+ "bytes",
+ "chrono",
+ "console",
+ "dirs",
+ "env_logger",
+ "futures",
+ "http-body-util",
+ "human_bytes",
+ "hyper",
+ "json",
+ "local-ip-address",
+ "log",
+ "mime_guess",
+ "new_mime_guess",
+ "qr2term",
+ "rust-embed",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "sqlx",
+ "tokio",
+ "tokio-util",
+ "tower-http",
+]
 
 [[package]]
 name = "finl_unicode"
