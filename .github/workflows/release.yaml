@@ -67,7 +67,7 @@ jobs:
         run: cd frontend &&  pnpm i --no-frozen-lockfile &&  pnpm build && cd ..
 
       - name: copy frontend
-        run: cp -r frontend/dist/. backend/public
+        run: cp -r frontend/dist/. backend/public && cd backend
       - name: Build binary
         uses: houseabsolute/actions-rust-cross@v0
         with:
