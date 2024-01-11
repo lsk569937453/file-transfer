@@ -17,7 +17,6 @@ serde_derive = "1.0.101"
 json = "0.12.0"
 console = "0.15.0"
 rust-embed = "8.2.0"
-mime_guess = { version = "2"}
 anyhow = "1.0"
 sqlx = { version = "0.7", features = [ "runtime-tokio","sqlite" ] }
 dirs = "5.0"
@@ -29,6 +28,4 @@ chrono = "0.4.31"
 local-ip-address = "0.5.6"
 qr2term="0.3.1"
 tokio-util = { version = "0.7.7",  features = ["full","time"] }
-http-body-util = "0.1"
-new_mime_guess = "4.0.1"
-hyper = { version = "1", features = ["full"] }
+mime_guess="2.0.4"

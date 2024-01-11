@@ -1,57 +1,43 @@
 use crate::vojo::base_response::BaseResponse;
-use crate::vojo::common_error::CommonError;
 use crate::vojo::get_path_res::FileInfo;
 
-use axum::body::{self, Body};
+use axum::body::Body;
 use axum::{
-    async_trait,
     body::Bytes,
     extract,
     extract::Request,
-    extract::{FromRef, FromRequestParts, Multipart, Path, State},
-    http::{request::Parts, StatusCode},
+    extract::{Multipart, State},
+    http::StatusCode,
     response::Response,
     BoxError,
 };
 use std::io;
 
-use axum::{extract::Query, Router};
+use axum::extract::Query;
 use chrono::offset::Utc;
 use chrono::DateTime;
 use futures::Stream;
 use futures::TryStreamExt;
-use http_body_util::{BodyExt, StreamBody};
 use human_bytes::human_bytes;
 
 use serde_derive::Deserialize;
 use sqlx::Pool;
 use sqlx::Row;
-use sqlx::{Sqlite, SqliteConnection};
+use sqlx::Sqlite;
 use std::path::PathBuf;
 use std::vec;
 use tokio::fs::File;
 use tokio::io::BufWriter;
-use tokio::{
-    self,
-    io::{AsyncReadExt, AsyncSeekExt},
-    runtime,
-};
-use tokio_util::io::ReaderStream;
+use tokio::{self};
 use tokio_util::io::StreamReader;
 use tower_http::services::fs::ServeFileSystemResponseBody;
-use tower_http::services::{ServeDir, ServeFile};
+use tower_http::services::ServeFile;
 
 #[derive(Debug, Deserialize)]
 pub struct Params {
     path: Option<String>,
 }
-// #[derive(Debug, MultipartForm)]
-// struct UploadForm {
-//     #[multipart(rename = "file")]
-//     files: Vec<TempFile>,
-// }
 
-// #[get("/path")]
 pub async fn get_path(
     Query(params): Query<Params>,
     State(pool): State<Pool<Sqlite>>,
@@ -106,7 +92,6 @@ async fn get_path_with_error(
     }
     Ok(files)
 }
-// #[put("/root_path")]
 pub async fn set_root_path(
     State(pool): State<Pool<Sqlite>>,
     extract::Json(payload): extract::Json<Params>,
@@ -143,7 +128,6 @@ async fn set_root_path_with_error(pool: Pool<Sqlite>, param: Params) -> Result<(
     .await?;
     Ok(())
 }
-// #[get("/download")]
 pub async fn download_file(
     Query(params): Query<Params>,
     State(pool): State<Pool<Sqlite>>,
@@ -157,18 +141,16 @@ async fn download_file_with_error(
     pool: Pool<Sqlite>,
     param: Params,
 ) -> Result<Response<ServeFileSystemResponseBody>, anyhow::Error> {
-    // let query_result = web::Query::<Params>::from_query(req.query_string())?;
     let web_path_items = param.path.unwrap().split(",").collect::<PathBuf>();
     let sqlite_row = sqlx::query("select *from config").fetch_one(&pool).await?;
     let config_root_path = sqlite_row.get::<String, _>("config_value");
     let final_path = PathBuf::new().join(config_root_path).join(web_path_items);
-    let mut req = Request::new(Body::empty());
+    let req = Request::new(Body::empty());
 
     let ss = ServeFile::new(final_path).try_call(req).await?;
 
     Ok(ss)
 }
-// #[get("/rootPath")]
 pub async fn get_root_path(
     State(pool): State<Pool<Sqlite>>,
 ) -> Result<String, (StatusCode, String)> {
@@ -197,10 +179,9 @@ async fn get_root_path_with_error(pool: Pool<Sqlite>) -> Result<String, anyhow::
     let config_root_path = sqlite_row.get::<String, _>("config_value");
     Ok(config_root_path)
 }
-// #[post("/upload")]
 pub async fn upload_file(
     State(pool): State<Pool<Sqlite>>,
-    mut multipart: Multipart,
+    multipart: Multipart,
 ) -> Result<String, (StatusCode, String)> {
     info!("upload start");
     let res = upload_file_with_error(multipart, pool).await;
@@ -239,7 +220,7 @@ async fn upload_file_with_error(
             .to_string();
         info!("saving to {:?}", final_path);
 
-        stream_to_file(&final_path, field).await;
+        let _ = stream_to_file(&final_path, field).await;
     }
 
     Ok(())
@@ -250,15 +231,12 @@ where
     E: Into<BoxError>,
 {
     async {
-        // Convert the stream into an `AsyncRead`.
         let body_with_io_error = stream.map_err(|err| io::Error::new(io::ErrorKind::Other, err));
         let body_reader = StreamReader::new(body_with_io_error);
         futures::pin_mut!(body_reader);
 
-        // Create the file. `File` implements `AsyncWrite`.
         let mut file = BufWriter::new(File::create(path).await?);
 
-        // Copy the body into the file.
         tokio::io::copy(&mut body_reader, &mut file).await?;
 
         Ok::<_, io::Error>(())
