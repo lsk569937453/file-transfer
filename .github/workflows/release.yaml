@@ -54,8 +54,15 @@ jobs:
       - name: Install musl-tools on Linux
         run: sudo apt-get update --yes && sudo apt-get install --yes musl-tools
         if: contains(matrix.platform.name, 'musl')
-      - name: pnpm-setup
-        uses: pnpm/action-setup@v2
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - uses: pnpm/action-setup@v2
+        name: Install pnpm
+        with:
+          version: 7
+          run_install: false
       - name: install frontend
         run: cd frontend && sudo pnpm i && sudo pnpm build && cd ..
 
