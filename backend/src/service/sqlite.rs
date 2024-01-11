@@ -29,6 +29,11 @@ pub async fn init() -> Result<Pool<Sqlite>, anyhow::Error> {
         )",
         )
         .await;
+    let _ = connection
+        .execute(
+            "insert  into config (config_key, config_value) values ('config_root_path', 'C:\')",
+        )
+        .await;
     let sqlite_pool = SqlitePool::connect(db_path).await?;
     Ok(sqlite_pool)
 }

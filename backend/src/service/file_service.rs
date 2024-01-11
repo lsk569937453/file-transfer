@@ -1,41 +1,62 @@
-use std::path::Path;
-use std::path::PathBuf;
-use std::vec;
-
 use crate::vojo::base_response::BaseResponse;
 use crate::vojo::common_error::CommonError;
 use crate::vojo::get_path_res::FileInfo;
-use actix_files::NamedFile;
-use actix_web::error::DispatchError::InternalError;
-use actix_web::http::Error;
-use actix_web::HttpRequest;
-use actix_web::{error, get, put, web, App, HttpResponse, HttpServer, Responder};
+
+use axum::body::{self, Body};
+use axum::{
+    async_trait,
+    body::Bytes,
+    extract,
+    extract::Request,
+    extract::{FromRef, FromRequestParts, Multipart, Path, State},
+    http::{request::Parts, StatusCode},
+    response::Response,
+    BoxError,
+};
+use std::io;
+
+use axum::{extract::Query, Router};
 use chrono::offset::Utc;
 use chrono::DateTime;
+use futures::Stream;
+use futures::TryStreamExt;
+use http_body_util::{BodyExt, StreamBody};
 use human_bytes::human_bytes;
+
 use serde_derive::Deserialize;
 use sqlx::Pool;
 use sqlx::Row;
 use sqlx::{Sqlite, SqliteConnection};
+use std::path::PathBuf;
+use std::vec;
 use tokio::fs::File;
+use tokio::io::BufWriter;
 use tokio::{
     self,
     io::{AsyncReadExt, AsyncSeekExt},
     runtime,
 };
+use tokio_util::io::ReaderStream;
+use tokio_util::io::StreamReader;
+use tower_http::services::fs::ServeFileSystemResponseBody;
+use tower_http::services::{ServeDir, ServeFile};
+
 #[derive(Debug, Deserialize)]
 pub struct Params {
-    path: String,
+    path: Option<String>,
 }
+// #[derive(Debug, MultipartForm)]
+// struct UploadForm {
+//     #[multipart(rename = "file")]
+//     files: Vec<TempFile>,
+// }
 
-#[get("/path")]
+// #[get("/path")]
 pub async fn get_path(
-    req: HttpRequest,
-    conn: web::Data<Pool<Sqlite>>,
-) -> Result<String, actix_web::Error> {
-    info!("req: {:?}", req.query_string());
-
-    let res = get_path_with_error(conn, req).await;
+    Query(params): Query<Params>,
+    State(pool): State<Pool<Sqlite>>,
+) -> Result<String, (StatusCode, String)> {
+    let res = get_path_with_error(pool, params).await;
     let data = match res {
         Ok(r) => {
             let res = BaseResponse {
@@ -51,22 +72,17 @@ pub async fn get_path(
             };
             serde_json::to_string(&res)
         }
-    }?;
+    }
+    .unwrap_or("error convert".to_string());
     Ok(data)
 }
 async fn get_path_with_error(
-    conn: web::Data<Pool<Sqlite>>,
-    req: HttpRequest,
+    pool: Pool<Sqlite>,
+    param: Params,
 ) -> Result<Vec<FileInfo>, anyhow::Error> {
-    let query_result = web::Query::<Params>::from_query(req.query_string());
-    let web_path = match query_result {
-        Ok(r) => r.path.to_string(),
-        Err(e) => String::from(""),
-    };
+    let web_path = param.path.unwrap_or(String::from("/"));
     info!("webpath is {}", web_path);
-    let sqlite_row = sqlx::query("select *from config")
-        .fetch_one(conn.as_ref())
-        .await?;
+    let sqlite_row = sqlx::query("select *from config").fetch_one(&pool).await?;
     let config_root_path = sqlite_row.get::<String, _>("config_value");
     let web_path_items = web_path.split(',').collect::<PathBuf>();
     let final_path = PathBuf::new().join(config_root_path).join(web_path_items);
@@ -90,12 +106,12 @@ async fn get_path_with_error(
     }
     Ok(files)
 }
-#[put("/root_path")]
+// #[put("/root_path")]
 pub async fn set_root_path(
-    conn: web::Data<Pool<Sqlite>>,
-    req: HttpRequest,
-) -> Result<String, actix_web::Error> {
-    let res = set_root_path_with_error(conn, req).await;
+    State(pool): State<Pool<Sqlite>>,
+    extract::Json(payload): extract::Json<Params>,
+) -> Result<String, (StatusCode, String)> {
+    let res = set_root_path_with_error(pool, payload).await;
     let res = match res {
         Ok(()) => {
             let base_res = BaseResponse {
@@ -111,52 +127,142 @@ pub async fn set_root_path(
             };
             serde_json::to_string(&base_res)
         }
-    }?;
+    }
+    .unwrap_or(String::from(""));
     Ok(res)
 }
 
-async fn set_root_path_with_error(
-    conn: web::Data<Pool<Sqlite>>,
-    req: HttpRequest,
-) -> Result<(), anyhow::Error> {
-    let params = web::Query::<Params>::from_query(req.query_string())?;
-    let root_path = &params.path;
-    let _ = sqlx::query("delete from config")
-        .execute(conn.as_ref())
-        .await?;
+async fn set_root_path_with_error(pool: Pool<Sqlite>, param: Params) -> Result<(), anyhow::Error> {
+    let root_path = param.path.ok_or(anyhow!(""))?;
+    let _ = sqlx::query("delete from config").execute(&pool).await?;
     let _ = sqlx::query(
         "insert  into config (config_key, config_value) values ('config_root_path', $1)",
     )
     .bind(root_path.to_string())
-    .execute(conn.as_ref())
+    .execute(&pool)
     .await?;
     Ok(())
 }
-#[get("/download")]
+// #[get("/download")]
 pub async fn download_file(
-    req: HttpRequest,
-    conn: web::Data<Pool<Sqlite>>,
-) -> Result<HttpResponse, actix_web::Error> {
-    info!("req: {:?}", req.query_string());
-
-    let res = download_file_with_error(conn, req)
+    Query(params): Query<Params>,
+    State(pool): State<Pool<Sqlite>>,
+) -> Result<Response<ServeFileSystemResponseBody>, (StatusCode, String)> {
+    let result = download_file_with_error(pool, params)
         .await
-        .map_err(|e| CommonError::from(e))?;
-
-    Ok(res)
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    Ok(result)
 }
 async fn download_file_with_error(
-    conn: web::Data<Pool<Sqlite>>,
-    req: HttpRequest,
-) -> Result<HttpResponse, anyhow::Error> {
-    let query_result = web::Query::<Params>::from_query(req.query_string())?;
-    let web_path_items = query_result.path.split(",").collect::<PathBuf>();
-    let sqlite_row = sqlx::query("select *from config")
-        .fetch_one(conn.as_ref())
-        .await?;
+    pool: Pool<Sqlite>,
+    param: Params,
+) -> Result<Response<ServeFileSystemResponseBody>, anyhow::Error> {
+    // let query_result = web::Query::<Params>::from_query(req.query_string())?;
+    let web_path_items = param.path.unwrap().split(",").collect::<PathBuf>();
+    let sqlite_row = sqlx::query("select *from config").fetch_one(&pool).await?;
     let config_root_path = sqlite_row.get::<String, _>("config_value");
     let final_path = PathBuf::new().join(config_root_path).join(web_path_items);
-    let istream = NamedFile::open_async(final_path).await?;
-    let res = istream.into_response(&req);
+    let mut req = Request::new(Body::empty());
+
+    let ss = ServeFile::new(final_path).try_call(req).await?;
+
+    Ok(ss)
+}
+// #[get("/rootPath")]
+pub async fn get_root_path(
+    State(pool): State<Pool<Sqlite>>,
+) -> Result<String, (StatusCode, String)> {
+    let res = get_root_path_with_error(pool).await;
+    let data = match res {
+        Ok(r) => {
+            let res = BaseResponse {
+                response_code: 0,
+                response_msg: r,
+            };
+            serde_json::to_string(&res)
+        }
+        Err(e) => {
+            let res = BaseResponse {
+                response_code: 1,
+                response_msg: e.to_string(),
+            };
+            serde_json::to_string(&res)
+        }
+    }
+    .unwrap_or(String::from(""));
+    Ok(data)
+}
+async fn get_root_path_with_error(pool: Pool<Sqlite>) -> Result<String, anyhow::Error> {
+    let sqlite_row = sqlx::query("select *from config").fetch_one(&pool).await?;
+    let config_root_path = sqlite_row.get::<String, _>("config_value");
+    Ok(config_root_path)
+}
+// #[post("/upload")]
+pub async fn upload_file(
+    State(pool): State<Pool<Sqlite>>,
+    mut multipart: Multipart,
+) -> Result<String, (StatusCode, String)> {
+    info!("upload start");
+    let res = upload_file_with_error(multipart, pool).await;
+    let res = match res {
+        Ok(()) => {
+            let base_res = BaseResponse {
+                response_code: 0,
+                response_msg: String::from(""),
+            };
+            serde_json::to_string(&base_res)
+        }
+        Err(e) => {
+            let base_res = BaseResponse {
+                response_code: 1,
+                response_msg: e.to_string(),
+            };
+            serde_json::to_string(&base_res)
+        }
+    }
+    .unwrap_or(String::from(""));
     Ok(res)
+}
+async fn upload_file_with_error(
+    mut multipart: Multipart,
+    pool: Pool<Sqlite>,
+) -> Result<(), anyhow::Error> {
+    let sqlite_row = sqlx::query("select *from config").fetch_one(&pool).await?;
+    let config_root_path = sqlite_row.get::<String, _>("config_value");
+    while let Some(field) = multipart.next_field().await? {
+        let file_name = field.file_name().unwrap().to_string();
+        let final_path = PathBuf::new()
+            .join(config_root_path.clone())
+            .join(file_name)
+            .to_str()
+            .unwrap()
+            .to_string();
+        info!("saving to {:?}", final_path);
+
+        stream_to_file(&final_path, field).await;
+    }
+
+    Ok(())
+}
+async fn stream_to_file<S, E>(path: &str, stream: S) -> Result<(), (StatusCode, String)>
+where
+    S: Stream<Item = Result<Bytes, E>>,
+    E: Into<BoxError>,
+{
+    async {
+        // Convert the stream into an `AsyncRead`.
+        let body_with_io_error = stream.map_err(|err| io::Error::new(io::ErrorKind::Other, err));
+        let body_reader = StreamReader::new(body_with_io_error);
+        futures::pin_mut!(body_reader);
+
+        // Create the file. `File` implements `AsyncWrite`.
+        let mut file = BufWriter::new(File::create(path).await?);
+
+        // Copy the body into the file.
+        tokio::io::copy(&mut body_reader, &mut file).await?;
+
+        Ok::<_, io::Error>(())
+    }
+    .await
+    .map_err(|err| (StatusCode::INTERNAL_SERVER_ERROR, err.to_string()))
 }

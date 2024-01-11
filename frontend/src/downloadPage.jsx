@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+
 import { Button } from "@nextui-org/react";
 import {
   Navbar,
@@ -15,18 +14,24 @@ import { Link } from "@nextui-org/react";
 import { Outlet } from "react-router-dom";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import axios from 'axios'
-
+import { getBaseUrl } from './utli/axios.js'
 export default function DownloadPage() {
   const navigate = useNavigate();
   let [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+
   const [data, setData] = useState([]);
   useEffect(() => {
     loadPage();
 
   }, [])
-  const getBaseUrl=()=>{
-    return import.meta.env.PROD	?window.location.origin + "/api" : "http://localhost:8345/api"
-  }
+  useEffect(()=>{
+
+   loadPage();
+    
+   
+  },[location]);
+
   const loadPage = async () => {
     let finalPath = "";
     let path = searchParams.get("path");
@@ -48,12 +53,12 @@ export default function DownloadPage() {
       setData(final);
     }
   }
-  const handleClick = (pathname, isDir) => {
+  const handleDownloadClick = (pathname, isDir) => {
     if (isDir) {
       console.log(pathname);
       const path = searchParams.get("path") === null ? pathname : (searchParams.get("path") + "," + pathname);
       navigate("/downloadPage?path=" + path);
-      navigate(0);
+      // navigate(0);
     } else {
       const path = searchParams.get("path") === null ? pathname : (searchParams.get("path") + "," + pathname);
       const downloadPath = "/download?path=" + path;
@@ -81,7 +86,6 @@ export default function DownloadPage() {
 
   };
   const handleReturnButtonClick = () => {
-
     const pathArray = searchParams.get("path").split(",");
     if (pathArray.length === 1) {
       navigate("/downloadPage");
@@ -90,7 +94,6 @@ export default function DownloadPage() {
       const path = pathArray.join(",");
       navigate("/downloadPage?path=" + path);
     }
-    navigate(0);
   }
   return (
     <div className='flex flex-col overflow-auto p-5'>
@@ -105,7 +108,7 @@ export default function DownloadPage() {
         </div>
       }
       {data.map((item, index) => (
-        <div key={index} className='flex flex-row cursor-pointer' onClick={() => handleClick(item.file_name, item.is_dir)}>
+        <div key={index} className='flex flex-row cursor-pointer' onClick={() => handleDownloadClick(item.file_name, item.is_dir)}>
           <div className='basis-2/12'>
             {
               item.is_dir ?
@@ -116,7 +119,7 @@ export default function DownloadPage() {
           </div>
           <div className='basis-10/12 flex flex-col gap-4'>
             <div className='basis-2/12 font-bold text-xl'>
-              {item.file_name.length < 10 ? item.file_name : item.file_name.slice(0, 10) + "..."}
+              {item.file_name.length < 20 ? item.file_name : item.file_name.slice(0, 20) + "..."}
             </div>
             <div className='basis-10/12 flex flex-row'>
               {
