@@ -13,11 +13,16 @@ import {
 import { Link } from "@nextui-org/react";
 import { Outlet } from "react-router-dom";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
+import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure, Progress } from "@nextui-org/react";
+
 import axios from 'axios'
 import { getBaseUrl } from './utli/axios.js'
 export default function DownloadPage() {
   const navigate = useNavigate();
   let [searchParams, setSearchParams] = useSearchParams();
+  const [percentCompleted, setPercentCompleted] = useState(60);
+  const { isOpen, onOpen, onClose, onOpenChange } = useDisclosure();
+
   const location = useLocation();
 
   const [data, setData] = useState([]);
@@ -25,12 +30,12 @@ export default function DownloadPage() {
     loadPage();
 
   }, [])
-  useEffect(()=>{
+  useEffect(() => {
 
-   loadPage();
-    
-   
-  },[location]);
+    loadPage();
+
+
+  }, [location]);
 
   const loadPage = async () => {
     let finalPath = "";
@@ -53,7 +58,7 @@ export default function DownloadPage() {
       setData(final);
     }
   }
-  const handleDownloadClick = (pathname, isDir) => {
+  const handleDownloadClick = async (pathname, isDir) => {
     if (isDir) {
       console.log(pathname);
       const path = searchParams.get("path") === null ? pathname : (searchParams.get("path") + "," + pathname);
@@ -62,26 +67,36 @@ export default function DownloadPage() {
     } else {
       const path = searchParams.get("path") === null ? pathname : (searchParams.get("path") + "," + pathname);
       const downloadPath = "/download?path=" + path;
-      axios({
+      onOpen();
+      let response = await axios({
         url: downloadPath, //your url
-        baseURL:getBaseUrl(),
+        baseURL: getBaseUrl(),
         method: 'GET',
         responseType: 'blob', // important
-      }).then((response) => {
-        // create file link in browser's memory
-        const href = URL.createObjectURL(response.data);
-
-        // create "a" HTML element with href to file & click
-        const link = document.createElement('a');
-        link.href = href;
-        link.setAttribute('download', pathname); //or any other extension
-        document.body.appendChild(link);
-        link.click();
-
-        // clean up "a" element & remove ObjectURL
-        document.body.removeChild(link);
-        URL.revokeObjectURL(href);
+        onDownloadProgress: progressEvent => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          console.log(percentCompleted);
+          setPercentCompleted(percentCompleted);
+        }
       });
+      // create file link in browser's memory
+      const href = URL.createObjectURL(response.data);
+
+      // create "a" HTML element with href to file & click
+      const link = document.createElement('a');
+      link.href = href;
+      link.setAttribute('download', pathname); //or any other extension
+      document.body.appendChild(link);
+      link.click();
+
+      // clean up "a" element & remove ObjectURL
+      document.body.removeChild(link);
+      URL.revokeObjectURL(href);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      onClose();
+      setPercentCompleted(0);
+
     }
 
   };
@@ -97,6 +112,26 @@ export default function DownloadPage() {
   }
   return (
     <div className='flex flex-col overflow-auto p-5'>
+      <Modal isOpen={isOpen} placement="center" backdrop='blur' onClose={onClose}>
+        <ModalContent>
+          {/* <div className='flex flex-row'>
+              <Progress aria-label="Loading..." value={percentCompleted} className="max-w-md h-full" />
+              <p>{percentCompleted}{'%'}</p>
+            </div> */}
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col gap-1">Download Progress</ModalHeader>
+              <ModalBody>
+                <div className='flex flex-row py-4 gap-3 justify-center items-center'>
+                  <Progress aria-label="Loading..." value={percentCompleted} className="max-w-md h-full" />
+                  <p>{percentCompleted}{'%'}</p>
+                </div>
+              </ModalBody>
+
+            </>
+          )}
+        </ModalContent>
+      </Modal>
       {
         searchParams.get("path") !== null && <div className='flex flex-row'>
           <div className='basis-2/12' onClick={handleReturnButtonClick}>
