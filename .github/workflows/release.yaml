@@ -64,7 +64,7 @@ jobs:
           version: 7
           run_install: false
       - name: install frontend
-        run: cd frontend && sudo pnpm i && sudo pnpm build && cd ..
+        run: cd frontend &&  pnpm i &&  pnpm build && cd ..
 
       - name: copy frontend
         run: cp -r frontend/dist/. backend/public
