@@ -212,7 +212,7 @@ async fn upload_file_with_error(
 ) -> Result<(), anyhow::Error> {
     let sqlite_row = sqlx::query("select *from config").fetch_one(&pool).await?;
     let config_root_path = sqlite_row.get::<String, _>("config_value");
-    while let Some(field) = multipart.next_field().await.unwrap() {
+    while let Some(field) = multipart.next_field().await? {
         let file_name = field.file_name().unwrap().to_string();
         let final_path = PathBuf::new()
             .join(config_root_path.clone())

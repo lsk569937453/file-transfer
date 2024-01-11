@@ -9,6 +9,7 @@ extern crate anyhow;
 extern crate log;
 use actix_cors::Cors;
 use axum::{
+    extract::DefaultBodyLimit,
     http::{header, StatusCode, Uri},
     http::{HeaderValue, Method},
     response::{Html, IntoResponse, Response},
@@ -113,6 +114,9 @@ async fn main_with_error2() -> Result<(), anyhow::Error> {
         .route("/settingPage", get(index_handler))
         .fallback_service(get(not_found))
         .layer(CorsLayer::permissive().allow_methods(Any))
+        .layer(DefaultBodyLimit::max(
+            1024 * 1024 * 1024 * 1024 * 1024 * 1024,
+        ))
         .with_state(sqlite_pool);
     // Start listening on the given address.
     let addr = SocketAddr::from(([0, 0, 0, 0], 8345));
