@@ -1,8 +1,6 @@
 import { useState, React, useEffect } from 'react'
 import { useRef } from "react";
 
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import { Button } from "@nextui-org/react";
 import {
   Navbar,
@@ -14,6 +12,7 @@ import {
   NavbarMenuItem
 } from "@nextui-org/react";
 import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, getKeyValue } from "@nextui-org/react";
+import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure, Progress } from "@nextui-org/react";
 
 import { Link } from "@nextui-org/react";
 import { Outlet } from "react-router-dom";
@@ -35,6 +34,9 @@ export default function UploadPage() {
   const fileUpload = useRef(null);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [rootPath, setRootPath] = useState("");
+  const [percentCompleted, setPercentCompleted] = useState(0);
+  const [isOpen, setIsOpen] = useState(false);
+
   const handleUpload = () => {
     fileUpload.current.click();
   };
@@ -84,31 +86,48 @@ export default function UploadPage() {
         return "cellValue";
     }
   };
-  const handleDeleAllFilesButtonClick=()=>{
+  const handleDeleAllFilesButtonClick = () => {
     setSelectedFiles([]);
   }
-  const handleUploadButtonClick=async ()=>{
+  const handleUploadButtonClick = async () => {
     var bodyFormData = new FormData();
-    selectedFiles.map((item,index)=>{
-      bodyFormData.append("file",item);
+    selectedFiles.map((item, index) => {
+      bodyFormData.append("file", item);
     });
+    setIsOpen(true);
     const { response_code, response_msg } = (await axios({
       url: "/upload", method: 'POST',
       data: bodyFormData,
       headers: { "Content-Type": "multipart/form-data" },
-      baseURL: getBaseUrl()
+      baseURL: getBaseUrl(),
+      onUploadProgress: function (progressEvent) {
+        console.log(progressEvent);
+
+        let percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+        console.log(percentCompleted);
+        setPercentCompleted(percentCompleted);
+      }
     })).data;
+   
     console.log(response_code);
     console.log(response_msg);
+    setIsOpen(false);
     if (response_code == 0) {
     }
   }
   return (
     <>
       <div className='flex flex-col gap-4 p-4'>
+        <Modal isOpen={isOpen} >
+          <ModalContent>
+            <Progress aria-label="Loading..." value={percentCompleted} className="max-w-md" />
+
+          </ModalContent>
+        </Modal>
+
         <div className='flex flex-row'>
           <p>Current Root Path:&nbsp;&nbsp;</p>
-            <p className='font-bold text-red-500'>{rootPath}</p>
+          <p className='font-bold text-red-500'>{rootPath}</p>
         </div>
 
         {selectedFiles.length === 0 && <>

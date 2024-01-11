@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+
 import { Button, Input, Card } from "@nextui-org/react";
 import { Outlet } from "react-router-dom";
 import { getBaseUrl } from './utli/axios.js'
