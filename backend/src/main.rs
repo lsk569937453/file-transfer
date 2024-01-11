@@ -95,8 +95,13 @@ async fn main() {
 //     Ok(())
 // }
 async fn main_with_error2() -> Result<(), anyhow::Error> {
-    let sqlite_pool = init().await?;
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
+    let sqlite_pool = init().await?;
+    let ip = local_ip()?;
+    let origin = format!("http://{}:8345", ip);
+    qr2term::print_qr(&origin)?;
+    info!("Listening on {}", origin);
+
     let api_routes = Router::new()
         .nest("/path", Router::new().route("/", get(get_path)))
         .nest("/rootPath", Router::new().route("/", get(get_root_path)))
@@ -118,9 +123,10 @@ async fn main_with_error2() -> Result<(), anyhow::Error> {
             1024 * 1024 * 1024 * 1024 * 1024 * 1024,
         ))
         .with_state(sqlite_pool);
+
     // Start listening on the given address.
     let addr = SocketAddr::from(([0, 0, 0, 0], 8345));
-    println!("listening on {}", addr);
+    // println!("listening on {}", addr);
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     axum::serve(listener, app.into_make_service())
         .await
