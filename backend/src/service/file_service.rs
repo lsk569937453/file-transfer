@@ -204,7 +204,24 @@ pub async fn upload_file(
 ) -> Result<String, (StatusCode, String)> {
     info!("upload start");
     let res = upload_file_with_error(multipart, pool).await;
-    Ok(String::from("ss"))
+    let res = match res {
+        Ok(()) => {
+            let base_res = BaseResponse {
+                response_code: 0,
+                response_msg: String::from(""),
+            };
+            serde_json::to_string(&base_res)
+        }
+        Err(e) => {
+            let base_res = BaseResponse {
+                response_code: 1,
+                response_msg: e.to_string(),
+            };
+            serde_json::to_string(&base_res)
+        }
+    }
+    .unwrap_or(String::from(""));
+    Ok(res)
 }
 async fn upload_file_with_error(
     mut multipart: Multipart,
