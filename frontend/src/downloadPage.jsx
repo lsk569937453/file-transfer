@@ -143,6 +143,7 @@ export default function DownloadPage() {
         </div>
       }
       {data.map((item, index) => (
+        // <Link color="foreground" href='' key={index}>
         <div key={index} className='flex flex-row cursor-pointer' onClick={() => handleDownloadClick(item.file_name, item.is_dir)}>
           <div className='basis-2/12'>
             {
@@ -169,6 +170,7 @@ export default function DownloadPage() {
             </div>
           </div>
         </div>
+        // </Link>
       ))
       }
     </div>
