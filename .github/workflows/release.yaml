@@ -80,6 +80,7 @@ jobs:
         shell: bash
         run: |
           echo "CURRENT_VERSION=$(cargo pkgid | cut -d# -f2 | cut -d: -f2)" >> $GITHUB_ENV
+          
       - name: Package as archive
         shell: bash
         run: |
