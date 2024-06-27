@@ -79,7 +79,7 @@ jobs:
         with:
           command: "build"
           target: ${{ matrix.platform.target }}
-          toolchain: ${{ matrix.toolchain }}
+          # toolchain: ${{ matrix.toolchain }}
           working-directory: backend
           args: "--locked --release"
           strip: true
