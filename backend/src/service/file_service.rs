@@ -72,6 +72,7 @@ async fn get_path_with_error(
     let config_root_path = sqlite_row.get::<String, _>("config_value");
     let web_path_items = web_path.split(',').collect::<PathBuf>();
     let final_path = PathBuf::new().join(config_root_path).join(web_path_items);
+    println!("final path is {}", final_path.display());
     let mut files_in_dir = tokio::fs::read_dir(&final_path).await?;
     let mut files = vec![];
     while let Some(entry) = files_in_dir.next_entry().await? {
@@ -220,7 +221,9 @@ async fn upload_file_with_error(
             .to_string();
         info!("saving to {:?}", final_path);
 
-        let _ = stream_to_file(&final_path, field).await;
+        let _ = stream_to_file(&final_path, field)
+            .await
+            .map_err(|(a, b)| anyhow!("Status code is {}, message is {}", a, b))?;
     }
 
     Ok(())
