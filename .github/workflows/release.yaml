@@ -76,7 +76,7 @@ jobs:
           rust-version: 1.75.0
       - name: Build for Windows
         if: matrix.platform.os_name == 'Windows-x86_64'
-        run: cargo build --target ${{ matrix.platform.target }} --release 
+        run: cd backend && cargo build --target ${{ matrix.platform.target }} --release  && cd ..
       - name: Build binary
         if: matrix.platform.os_name != 'Windows-x86_64'
         uses: houseabsolute/actions-rust-cross@v0
