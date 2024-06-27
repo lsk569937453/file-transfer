@@ -69,12 +69,17 @@ jobs:
       - name: copy frontend
         run: cp -r frontend/dist/. backend/public 
       - id: setup-rust
-        # if: matrix.platform.os_name == 'Windows-x86_64'
+        if: matrix.platform.os_name == 'Windows-x86_64'
         name: setup rust
         uses: ningenMe/setup-rustup@v1.1.0
         with:
-          rust-version: ${{ (matrix.platform.os_name == 'Windows-x86_64') && '1.75.0' || '1.79.0' }}
+          rust-version: 1.75.0
+      - id: Build for Windows
+        if: matrix.platform.os_name == 'Windows-x86_64'
+        name: Build for Windows
+        run: cargo build --target ${{ matrix.platform.target }} --release 
       - name: Build binary
+        if: matrix.platform.os_name != 'Windows-x86_64'
         uses: houseabsolute/actions-rust-cross@v0
         with:
           command: "build"
