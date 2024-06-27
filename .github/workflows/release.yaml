@@ -76,7 +76,6 @@ jobs:
           rust-version: 1.75.0
       - name: Build for Windows
         if: matrix.platform.os_name == 'Windows-x86_64'
-        name: Build for Windows
         run: cargo build --target ${{ matrix.platform.target }} --release 
       - name: Build binary
         if: matrix.platform.os_name != 'Windows-x86_64'
