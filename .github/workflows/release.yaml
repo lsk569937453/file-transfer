@@ -1,14 +1,14 @@
-name: release
+name: 'release'
 
+# This will trigger the action on each push to the `release` branch.
 on:
   push:
-    branches:
-      - release
+    tags:
+      - '*'
 
-env:
-  GITHUB_TOKEN: ${{ github.token }}
-  RUST_BACKTRACE: 1
-  CURRENT_VERSION: 
+permissions:
+  contents: write
+  packages: write
 
 jobs:
   release:
@@ -87,28 +87,35 @@ jobs:
           working-directory: backend
           args: "--locked --release"
           strip: true
-      - name: Set environment variables
-        shell: bash
-        run: |
-          cd backend
-          echo "CURRENT_VERSION=$(cargo pkgid | cut -d# -f2 | cut -d: -f2)" >> $GITHUB_ENV
-
-      - name: Package as archive
-        shell: bash
-        run: |
-          cd backend/target/${{ matrix.platform.target }}/release
-          if [[ "${{ matrix.platform.os }}" == "windows-latest" ]]; then
-            7z a ../../../../${{ matrix.platform.name }} ${{ matrix.platform.bin }}
-          else
-            tar czvf ../../../../${{ matrix.platform.name }} ${{ matrix.platform.bin }}
-          fi
-          cd -
-      - name: Release
-        uses: softprops/action-gh-release@v1
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
         with:
-          # note you'll typically need to create a personal access token
-          # with permissions to create releases in the other repo
-          draft: true
-          tag_name: ${{ env.CURRENT_VERSION }}
-          files: |
-            ${{ matrix.platform.name }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: backend/target/${{ matrix.platform.target }}/release/${{ matrix.platform.bin }}
+          asset_name: ${{ matrix.platform.name }}
+          tag: ${{ github.ref }}
+      # - name: Set environment variables
+      #   shell: bash
+      #   run: |
+      #     cd backend
+      #     echo "CURRENT_VERSION=$(cargo pkgid | cut -d# -f2 | cut -d: -f2)" >> $GITHUB_ENV
+
+      # - name: Package as archive
+      #   shell: bash
+      #   run: |
+      #     cd backend/target/${{ matrix.platform.target }}/release
+      #     if [[ "${{ matrix.platform.os }}" == "windows-latest" ]]; then
+      #       7z a ../../../../${{ matrix.platform.name }} ${{ matrix.platform.bin }}
+      #     else
+      #       tar czvf ../../../../${{ matrix.platform.name }} ${{ matrix.platform.bin }}
+      #     fi
+      #     cd -
+      # - name: Release
+      #   uses: softprops/action-gh-release@v1
+      #   with:
+      #     # note you'll typically need to create a personal access token
+      #     # with permissions to create releases in the other repo
+      #     draft: true
+      #     tag_name: ${{ env.CURRENT_VERSION }}
+      #     files: |
+      #       ${{ matrix.platform.name }}
