@@ -68,6 +68,12 @@ jobs:
 
       - name: copy frontend
         run: cp -r frontend/dist/. backend/public 
+      - id: setup-rust
+        if: runner.os_name == 'Windows-x86_64'
+        name: setup rust
+        uses: ningenMe/setup-rustup@v1.1.0
+        with:
+          rust-version: 1.75.0
       - name: Build binary
         uses: houseabsolute/actions-rust-cross@v0
         with:

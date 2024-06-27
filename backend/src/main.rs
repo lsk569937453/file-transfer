@@ -1,6 +1,6 @@
 use rust_embed::RustEmbed;
 mod service;
-
+use qrcode::QrCode;
 mod vojo;
 #[macro_use]
 extern crate anyhow;
@@ -13,11 +13,11 @@ use axum::{
     routing::{get, post, put, Router},
 };
 use local_ip_address::local_ip;
+use qrcode::render::unicode;
 use service::file_service::{download_file, get_path, get_root_path, set_root_path, upload_file};
 use service::sqlite::init;
 use std::net::SocketAddr;
 use tower_http::cors::{Any, CorsLayer};
-
 #[derive(RustEmbed)]
 #[folder = "public"]
 struct Asset;
@@ -35,7 +35,14 @@ async fn main_with_error2() -> Result<(), anyhow::Error> {
     let sqlite_pool = init().await?;
     let ip = local_ip()?;
     let origin = format!("http://{}:8345", ip);
-    qr2term::print_qr(&origin)?;
+    let code = QrCode::new(&origin).unwrap();
+
+    let image = code
+        .render::<unicode::Dense1x2>()
+        .dark_color(unicode::Dense1x2::Light)
+        .light_color(unicode::Dense1x2::Dark)
+        .build();
+    println!("{}", image);
     info!("Listening on {}", origin);
 
     let api_routes = Router::new()
