@@ -23,27 +23,27 @@ jobs:
             os: ubuntu-20.04
             target: x86_64-unknown-linux-musl
             bin: file-transfer
-            name: file-transfer-Linux-x86_64-musl.tar.gz
+            name: file-transfer-Linux-x86_64-musl
           - os_name: Linux-aarch64
             os: ubuntu-20.04
             target: aarch64-unknown-linux-musl
             bin: file-transfer
-            name: file-transfer-Linux-aarch64-musl.tar.gz
+            name: file-transfer-Linux-aarch64-musl
           - os_name: Windows-x86_64
             os: windows-latest
             target: x86_64-pc-windows-msvc
             bin: file-transfer.exe
-            name: file-transfer-Windows-x86_64.zip
+            name: file-transfer-Windows-x86_64.exe
           - os_name: macOS-x86_64
             os: macOS-latest
             target: x86_64-apple-darwin
             bin: file-transfer
-            name: file-transfer-Darwin-x86_64.tar.gz
+            name: file-transfer-Darwin-x86_64
           - os_name: macOS-aarch64
             os: macOS-latest
             target: aarch64-apple-darwin
             bin: file-transfer
-            name: file-transfer-Darwin-aarch64.tar.gz
+            name: file-transfer-Darwin-aarch64
         toolchain:
           - stable
 
