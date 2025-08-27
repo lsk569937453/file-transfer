@@ -8,26 +8,35 @@ rust-version = "1.70"
 strip = true
 
 [dependencies]
-axum = { version = "0.7.3", features = ["multipart"] }
-tower-http = { version = "0.5.0", features = ["fs", "cors"] }
-futures = "0.3.30"
-bytes = "1.5.0"
-env_logger = "0.10.1"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0.41"
-serde_derive = "1.0.101"
-json = "0.12.0"
-console = "0.15.0"
-rust-embed = "8.2.0"
-anyhow = "1.0"
-sqlx = { version = "0.7", features = ["runtime-tokio", "sqlite"] }
-dirs = "5.0"
-log = "^0.4"
-tokio = { version = "1.35.1", features = ["full", "tracing"] }
-actix-cors = "0.7.0"
-human_bytes = "0.4"
+actix-cors = "0.7.1"
+anyhow = "1.0.99"
+axum = { version = "0.8.4", features = ["multipart"] }
+bytes = "1.10.1"
 chrono = "0.4.31"
-local-ip-address = "0.5.6"
-qrcode = { version = "0.13", default-features = false }
-tokio-util = { version = "0.7.7", features = ["full", "time"] }
-mime_guess = "2.0.4"
+console = "0.16.0"
+dirs = "6.0.0"
+env_logger = "0.11.8"
+futures = "0.3.31"
+human_bytes = "0.4"
+json = "0.12.4"
+libsqlite3-sys = { version = "0.35.0", features = ["bundled"] }
+local-ip-address = "0.6.5"
+log = "^0.4"
+mime_guess = "2.0.5"
+qrcode = { version = "0.14.1", default-features = false }
+rust-embed = "8.7.2"
+serde = { version = "1.0", features = ["derive"] }
+serde_derive = "1.0.219"
+serde_json = "1.0.143"
+sqlx = { version = "0.8.6", features = ["runtime-tokio", "sqlite"] }
+tokio = { version = "1.47.1", features = ["full", "tracing"] }
+tokio-util = { version = "0.7.16", features = ["full", "time"] }
+tower-http = { version = "0.6.6", features = ["fs", "cors"] }
+time = "0.3.41"
+
+# [workspace.metadata.cross.target.x86_64-unknown-linux-gnu]
+# # Install libssl-dev:arm64, see <https://github.com/cross-rs/cross/blob/main/docs/custom_images.md#adding-dependencies-to-existing-images>
+# pre-build = [
+#     "dpkg --add-architecture $CROSS_DEB_ARCH",
+#     "apt-get update && apt-get --assume-yes install libssl-dev:$CROSS_DEB_ARCH",
+# ]
