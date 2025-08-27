@@ -19,7 +19,7 @@ env_logger = "0.11.8"
 futures = "0.3.31"
 human_bytes = "0.4"
 json = "0.12.4"
-libsqlite3-sys = { version = "0.35.0", features = ["bundled"] }
+libsqlite3-sys = { version = "*", features = ["bundled"] }
 local-ip-address = "0.6.5"
 log = "^0.4"
 mime_guess = "2.0.5"

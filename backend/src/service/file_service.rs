@@ -221,7 +221,7 @@ async fn upload_file_with_error(
             .to_string();
         info!("saving to {:?}", final_path);
 
-        let _ = stream_to_file(&final_path, field)
+        stream_to_file(&final_path, field)
             .await
             .map_err(|(a, b)| anyhow!("Status code is {}, message is {}", a, b))?;
     }
