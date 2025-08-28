@@ -54,7 +54,7 @@ async fn main_with_error2() -> Result<(), anyhow::Error> {
 
     let app = Router::new()
         .nest("/api", api_routes)
-        .route("/assets/*key", get(static_handler))
+        .route("/assets/{key}", get(static_handler))
         .route("/", get(index_handler))
         .route("/downloadPage", get(index_handler))
         .route("/uploadPage", get(index_handler))
