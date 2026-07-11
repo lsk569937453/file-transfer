@@ -108,24 +108,30 @@ function App() {
   const { pathname } = useLocation();
 
   return (
-    <div>
-      <div role="tablist" className="tabs tabs-boxed">
+    <div className="lg:flex lg:flex-row min-h-screen">
+      <nav className="flex flex-row gap-1 p-2 bg-base-200 lg:flex-col lg:w-60 lg:shrink-0 lg:min-h-screen lg:p-4 lg:bg-transparent lg:border-r lg:border-base-300">
         {headerdata.map((item) => (
           <Link
             to={item.link}
             key={item.id}
-            role="tab"
-            className={`tab ${pathname === item.link ? "tab-active" : ""}`}
+            className={`flex flex-1 lg:flex-none items-center justify-center lg:justify-start gap-2 px-3 py-2 rounded-lg ${
+              pathname === item.link
+                ? "bg-primary text-primary-content"
+                : "hover:bg-base-300"
+            }`}
           >
-            {item.label}
+            <span className="hidden lg:inline-flex">{item.svg}</span>
+            <span>{item.label}</span>
           </Link>
         ))}
-      </div>
-      <Routes>
-        {router.map((item, index) => (
-          <Route path={item.path} element={item.element} key={index} />
-        ))}
-      </Routes>
+      </nav>
+      <main className="flex-1 min-w-0">
+        <Routes>
+          {router.map((item, index) => (
+            <Route path={item.path} element={item.element} key={index} />
+          ))}
+        </Routes>
+      </main>
     </div>
   );
 }

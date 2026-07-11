@@ -71,7 +71,7 @@ export default function SettingPage() {
   return (
     <>
       {inputData !== "" && (
-        <div className="p-4 flex flex-col gap-4">
+        <div className="p-4 flex flex-col gap-4 lg:max-w-3xl lg:mx-auto">
           <input
             type="text"
             value={inputData}

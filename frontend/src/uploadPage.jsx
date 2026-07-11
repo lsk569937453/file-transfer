@@ -76,7 +76,7 @@ export default function UploadPage() {
 
   return (
     <>
-      <div className="flex flex-col gap-4 p-4">
+      <div className="flex flex-col gap-4 p-4 lg:max-w-3xl lg:mx-auto">
         <dialog
           id="upload_modal"
           className={`modal ${isOpen ? "modal-open" : ""}`}
