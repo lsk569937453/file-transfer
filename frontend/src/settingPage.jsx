@@ -76,11 +76,11 @@ export default function SettingPage() {
             type="text"
             value={inputData}
             onChange={(e) => setInputData(e.target.value)}
-            placeholder="Set the root path"
+            placeholder="请设置根目录"
             className="input input-bordered w-full"
           />
           <button className="btn btn-primary" onClick={handleSetButtonClick}>
-            Set Path
+            设置路径
           </button>
           {/* <ToastContainer /> */}
           <div className="card bg-base-100 shadow-xl">
@@ -89,8 +89,8 @@ export default function SettingPage() {
                 <table className="table w-full">
                   <thead>
                     <tr>
-                      <th>Disk</th>
-                      <th>Action</th>
+                      <th>磁盘</th>
+                      <th>操作</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -102,7 +102,7 @@ export default function SettingPage() {
                             onClick={() => handleUseButtonClick(item.disk)}
                             className="btn btn-primary btn-ghost"
                           >
-                            Use the path
+                            使用该路径
                           </button>
                         </td>
                       </tr>

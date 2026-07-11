@@ -14,7 +14,7 @@ import SettingPage from "./settingPage";
 const headerdata = [
   {
     id: "Computer",
-    label: "Computer",
+    label: "下载",
     link: "/downloadPage",
     svg: (
       <svg
@@ -38,7 +38,7 @@ const headerdata = [
   },
   {
     id: "Upload",
-    label: "Upload",
+    label: "上传",
     link: "/uploadPage",
     svg: (
       <svg
@@ -62,7 +62,7 @@ const headerdata = [
   },
   {
     id: "Setting",
-    label: "Setting",
+    label: "设置",
     link: "/settingPage",
     svg: (
       <svg

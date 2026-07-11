@@ -1,6 +1,7 @@
 import { useState, React, useEffect, useRef } from "react";
 import axios from "axios";
 import { getBaseUrl } from "./utli/axios.js";
+import { formatBytes } from "./utli/format.js";
 
 export default function UploadPage() {
   const fileUpload = useRef(null);
@@ -8,6 +9,10 @@ export default function UploadPage() {
   const [rootPath, setRootPath] = useState("");
   const [percentCompleted, setPercentCompleted] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
+  const [uploadLoaded, setUploadLoaded] = useState(0);
+  const [uploadTotal, setUploadTotal] = useState(0);
+  const [uploadSpeed, setUploadSpeed] = useState(0);
+  const lastUploadProgressRef = useRef({ loaded: 0, time: 0 });
 
   const handleUpload = () => {
     fileUpload.current.click();
@@ -50,6 +55,11 @@ export default function UploadPage() {
     selectedFiles.map((item) => {
       bodyFormData.append("file", item);
     });
+    setUploadLoaded(0);
+    setUploadTotal(0);
+    setUploadSpeed(0);
+    setPercentCompleted(0);
+    lastUploadProgressRef.current = { loaded: 0, time: 0 };
     setIsOpen(true);
     const { response_code, response_msg } = (
       await axios({
@@ -58,11 +68,19 @@ export default function UploadPage() {
         data: bodyFormData,
         headers: { "Content-Type": "multipart/form-data" },
         baseURL: getBaseUrl(),
-        onUploadProgress: function (progressEvent) {
-          let percentCompleted = Math.round(
-            (progressEvent.loaded * 100) / progressEvent.total
-          );
-          setPercentCompleted(percentCompleted);
+        onUploadProgress: (progressEvent) => {
+          const { loaded, total, timeStamp } = progressEvent;
+          const last = lastUploadProgressRef.current;
+          let speed = 0;
+          if (last.time && timeStamp > last.time) {
+            const dt = (timeStamp - last.time) / 1000;
+            if (dt > 0) speed = (loaded - last.loaded) / dt;
+          }
+          lastUploadProgressRef.current = { loaded, time: timeStamp };
+          setPercentCompleted(total ? Math.round((loaded * 100) / total) : 0);
+          setUploadLoaded(loaded);
+          setUploadTotal(total);
+          setUploadSpeed(speed);
         },
       })
     ).data;
@@ -82,23 +100,42 @@ export default function UploadPage() {
           className={`modal ${isOpen ? "modal-open" : ""}`}
         >
           <div className="modal-box">
-            <h3 className="font-bold text-lg">Upload Progress</h3>
-            <div className="flex flex-row py-4 gap-3 justify-center items-center">
+            <h3 className="font-bold text-lg">上传中</h3>
+            <p className="text-sm opacity-70 break-all mb-4">
+              {selectedFiles.length} 个文件 ·{" "}
+              {formatBytes(
+                uploadTotal ||
+                  selectedFiles.reduce((s, f) => s + (f.size || 0), 0)
+              )}
+            </p>
+            <div className="flex flex-col gap-2 py-2">
+              <div className="flex flex-row items-center justify-between">
+                <span className="text-2xl font-bold tabular-nums">
+                  {percentCompleted}
+                  {"%"}
+                </span>
+                <span className="text-sm opacity-60 tabular-nums">
+                  {uploadTotal
+                    ? `${formatBytes(uploadLoaded)} / ${formatBytes(uploadTotal)}`
+                    : formatBytes(uploadLoaded)}
+                </span>
+              </div>
               <progress
-                className="progress progress-primary w-56"
+                className="progress progress-primary w-full"
                 value={percentCompleted}
                 max="100"
               ></progress>
-              <p>
-                {percentCompleted}
-                {"%"}
-              </p>
+              <div className="flex flex-row items-center justify-end text-sm opacity-60">
+                <span className="tabular-nums">
+                  {uploadSpeed > 0 ? `${formatBytes(uploadSpeed)}/s` : ""}
+                </span>
+              </div>
             </div>
           </div>
         </dialog>
 
         <div className="flex flex-row">
-          <p>Current Root Path:&nbsp;&nbsp;</p>
+          <p>当前根目录：</p>
           <p className="font-bold text-red-500">{rootPath}</p>
         </div>
 
@@ -112,7 +149,7 @@ export default function UploadPage() {
               style={{ opacity: "0", display: "none" }}
             />
             <button onClick={handleUpload} className="btn btn-primary">
-              Select Files
+              选择文件
             </button>
           </>
         )}
@@ -123,8 +160,8 @@ export default function UploadPage() {
               <table className="table w-full">
                 <thead>
                   <tr>
-                    <th>Name</th>
-                    <th>Action</th>
+                    <th>名称</th>
+                    <th>操作</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -162,13 +199,13 @@ export default function UploadPage() {
                 className="btn btn-error basis-6/12"
                 onClick={handleDeleAllFilesButtonClick}
               >
-                Delete All Files
+                删除全部
               </button>
               <button
                 className="btn btn-primary basis-6/12"
                 onClick={handleUploadButtonClick}
               >
-                Upload
+                上传
               </button>
             </div>
           </div>

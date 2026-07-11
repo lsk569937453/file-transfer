@@ -2,16 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import axios from "axios";
 import { getBaseUrl } from "./utli/axios.js";
-
-const formatBytes = (bytes) => {
-  if (!bytes || bytes <= 0) return "0 B";
-  const units = ["B", "KB", "MB", "GB", "TB"];
-  const i = Math.min(
-    Math.floor(Math.log(bytes) / Math.log(1024)),
-    units.length - 1
-  );
-  return (bytes / Math.pow(1024, i)).toFixed(i === 0 ? 0 : 1) + " " + units[i];
-};
+import { formatBytes } from "./utli/format.js";
 
 export default function DownloadPage() {
   const navigate = useNavigate();
@@ -23,6 +14,7 @@ export default function DownloadPage() {
   const [downloadTotal, setDownloadTotal] = useState(0);
   const [downloadSpeed, setDownloadSpeed] = useState(0);
   const lastProgressRef = useRef({ loaded: 0, time: 0 });
+  const abortControllerRef = useRef(null);
 
   const location = useLocation();
 
@@ -75,39 +67,48 @@ export default function DownloadPage() {
       setDownloadSpeed(0);
       setPercentCompleted(0);
       lastProgressRef.current = { loaded: 0, time: 0 };
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
       setIsOpen(true);
-      let response = await axios({
-        url: downloadPath,
-        baseURL: getBaseUrl(),
-        method: "GET",
-        responseType: "blob",
-        onDownloadProgress: (progressEvent) => {
-          const { loaded, total, timeStamp } = progressEvent;
-          const last = lastProgressRef.current;
-          let speed = 0;
-          if (last.time && timeStamp > last.time) {
-            const dt = (timeStamp - last.time) / 1000;
-            if (dt > 0) speed = (loaded - last.loaded) / dt;
-          }
-          lastProgressRef.current = { loaded, time: timeStamp };
-          setPercentCompleted(total ? Math.round((loaded * 100) / total) : 0);
-          setDownloadLoaded(loaded);
-          setDownloadTotal(total);
-          setDownloadSpeed(speed);
-        },
-      });
-      const href = URL.createObjectURL(response.data);
-      const link = document.createElement("a");
-      link.href = href;
-      link.setAttribute("download", pathname);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(href);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setIsOpen(false);
-      setPercentCompleted(0);
-      setDownloadFileName("");
+      try {
+        let response = await axios({
+          url: downloadPath,
+          baseURL: getBaseUrl(),
+          method: "GET",
+          responseType: "blob",
+          signal: controller.signal,
+          onDownloadProgress: (progressEvent) => {
+            const { loaded, total, timeStamp } = progressEvent;
+            const last = lastProgressRef.current;
+            let speed = 0;
+            if (last.time && timeStamp > last.time) {
+              const dt = (timeStamp - last.time) / 1000;
+              if (dt > 0) speed = (loaded - last.loaded) / dt;
+            }
+            lastProgressRef.current = { loaded, time: timeStamp };
+            setPercentCompleted(total ? Math.round((loaded * 100) / total) : 0);
+            setDownloadLoaded(loaded);
+            setDownloadTotal(total);
+            setDownloadSpeed(speed);
+          },
+        });
+        const href = URL.createObjectURL(response.data);
+        const link = document.createElement("a");
+        link.href = href;
+        link.setAttribute("download", pathname);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(href);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      } catch (err) {
+        // 用户取消或请求失败，跳过保存
+      } finally {
+        setIsOpen(false);
+        setPercentCompleted(0);
+        setDownloadFileName("");
+        abortControllerRef.current = null;
+      }
     }
   };
 
@@ -122,6 +123,12 @@ export default function DownloadPage() {
     }
   };
 
+  const handleCancelDownload = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+  };
+
   return (
     <div className="flex flex-col overflow-auto p-5">
       <dialog
@@ -129,7 +136,7 @@ export default function DownloadPage() {
         className={`modal ${isOpen ? "modal-open" : ""}`}
       >
         <div className="modal-box">
-          <h3 className="font-bold text-lg">Downloading</h3>
+          <h3 className="font-bold text-lg">下载中</h3>
           {downloadFileName && (
             <p className="text-sm opacity-70 break-all mb-4">
               {downloadFileName}
@@ -158,6 +165,14 @@ export default function DownloadPage() {
               </span>
             </div>
           </div>
+          <div className="modal-action">
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={handleCancelDownload}
+            >
+              取消
+            </button>
+          </div>
         </div>
       </dialog>
 
@@ -180,7 +195,7 @@ export default function DownloadPage() {
             <path d="M9 14l-4 -4l4 -4" />
             <path d="M5 10h11a4 4 0 1 1 0 8h-1" />
           </svg>
-          <span className="font-bold">Return To Previous Dir</span>
+          <span className="font-bold">返回上一级</span>
         </div>
       )}
 
@@ -252,9 +267,9 @@ export default function DownloadPage() {
         <table className="table">
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Size</th>
-              <th>Update Time</th>
+              <th>名称</th>
+              <th>大小</th>
+              <th>修改时间</th>
             </tr>
           </thead>
           <tbody>
