@@ -14,7 +14,7 @@ use axum::{
 use std::io;
 
 use axum::extract::Query;
-use chrono::offset::Utc;
+use chrono::offset::Local;
 use chrono::DateTime;
 use futures::Stream;
 use futures::TryStreamExt;
@@ -78,7 +78,7 @@ async fn get_path_with_error(
     while let Some(entry) = files_in_dir.next_entry().await? {
         let meta_data = entry.metadata().await?;
         let size = human_bytes(meta_data.len() as u32);
-        let modified_time: DateTime<Utc> = meta_data.modified()?.into();
+        let modified_time: DateTime<Local> = meta_data.modified()?.into();
         let file_info = FileInfo {
             file_name: entry
                 .file_name()
