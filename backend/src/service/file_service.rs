@@ -91,7 +91,74 @@ async fn get_path_with_error(
         };
         files.push(file_info);
     }
+    if !web_path.is_empty() && web_path != "/" {
+        if let Err(e) = record_recent_path(&pool, &web_path).await {
+            warn!("failed to record recent path {}: {}", web_path, e);
+        }
+    }
     Ok(files)
+}
+
+async fn record_recent_path(pool: &Pool<Sqlite>, web_path: &str) -> Result<(), anyhow::Error> {
+    sqlx::query("delete from recent_path where path = $1")
+        .bind(web_path)
+        .execute(pool)
+        .await?;
+    sqlx::query("insert into recent_path (path) values ($1)")
+        .bind(web_path)
+        .execute(pool)
+        .await?;
+    sqlx::query(
+        "delete from recent_path where id not in (
+            select id from recent_path order by id desc limit 5
+        )",
+    )
+    .execute(pool)
+    .await?;
+    Ok(())
+}
+
+pub async fn get_recent_path(
+    State(pool): State<Pool<Sqlite>>,
+) -> Result<String, (StatusCode, String)> {
+    let res = get_recent_path_with_error(pool).await;
+    let data = match res {
+        Ok(r) => {
+            let res = BaseResponse {
+                response_code: 0,
+                response_msg: r,
+            };
+            serde_json::to_string(&res)
+        }
+        Err(e) => {
+            let res = BaseResponse {
+                response_code: 1,
+                response_msg: e.to_string(),
+            };
+            serde_json::to_string(&res)
+        }
+    }
+    .unwrap_or(String::from(""));
+    Ok(data)
+}
+
+async fn get_recent_path_with_error(pool: Pool<Sqlite>) -> Result<Vec<String>, anyhow::Error> {
+    let sqlite_row = sqlx::query("select *from config").fetch_one(&pool).await?;
+    let config_root_path = sqlite_row.get::<String, _>("config_value");
+    let rows = sqlx::query("select path from recent_path order by id desc limit 5")
+        .fetch_all(&pool)
+        .await?;
+    let mut recent_paths = vec![];
+    for row in rows {
+        let web_path: String = row.get("path");
+        let final_path = PathBuf::new()
+            .join(&config_root_path)
+            .join(web_path.split(',').collect::<PathBuf>());
+        if tokio::fs::metadata(&final_path).await.is_ok() {
+            recent_paths.push(web_path);
+        }
+    }
+    Ok(recent_paths)
 }
 pub async fn set_root_path(
     State(pool): State<Pool<Sqlite>>,

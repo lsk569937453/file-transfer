@@ -9,6 +9,7 @@
 ## File system
 .DS_Store
 desktop.ini
+.zcode
 
 ## Editor
 *.swp
@@ -39,7 +40,7 @@ no_llvm_build
 backend/public/*
 
 # exception to the rule
-!backend/public/.gitkeep 
+!backend/public/.gitkeep
 target/
 ## Build
 /dl/

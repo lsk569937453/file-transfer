@@ -14,7 +14,9 @@ use axum::{
 };
 use local_ip_address::local_ip;
 use qrcode::render::unicode;
-use service::file_service::{download_file, get_path, get_root_path, set_root_path, upload_file};
+use service::file_service::{
+    download_file, get_path, get_recent_path, get_root_path, set_root_path, upload_file,
+};
 use service::sqlite::init;
 use std::net::SocketAddr;
 use tower_http::cors::{Any, CorsLayer};
@@ -48,6 +50,7 @@ async fn main_with_error2() -> Result<(), anyhow::Error> {
     let api_routes = Router::new()
         .nest("/path", Router::new().route("/", get(get_path)))
         .nest("/rootPath", Router::new().route("/", get(get_root_path)))
+        .nest("/recentPath", Router::new().route("/", get(get_recent_path)))
         .nest("/root_path", Router::new().route("/", put(set_root_path)))
         .nest("/download", Router::new().route("/", get(download_file)))
         .nest("/upload", Router::new().route("/", post(upload_file)));

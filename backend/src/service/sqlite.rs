@@ -12,13 +12,11 @@ pub async fn init() -> Result<Pool<Sqlite>, anyhow::Error> {
         .join(".file_transfer.db");
 
     let db_path = file_path.to_str().ok_or(anyhow!("failed to get db path"))?;
-    if Sqlite::database_exists(db_path).await? {
-        let sqlite_pool = SqlitePool::connect(db_path).await?;
-
-        return Ok(sqlite_pool);
+    let is_new_db = !Sqlite::database_exists(db_path).await?;
+    if is_new_db {
+        Sqlite::create_database(db_path).await?;
     }
 
-    Sqlite::create_database(db_path).await?;
     let mut connection = SqliteConnection::connect(db_path).await?;
     let _ = connection
         .execute(
@@ -29,14 +27,24 @@ pub async fn init() -> Result<Pool<Sqlite>, anyhow::Error> {
         )",
         )
         .await;
-    let default_path = if cfg!(windows) { "C:\\" } else { "/" };
-    println!("default path is {}", default_path);
-    let insert_query = format!(
-        "insert  into config (config_key, config_value) values ('config_root_path', '{}')",
-        default_path
-    );
-    println!("insert query is {}", insert_query);
-    let _ = connection.execute(insert_query.as_str()).await;
+    let _ = connection
+        .execute(
+            "CREATE TABLE IF NOT EXISTS recent_path (
+        id   INTEGER PRIMARY KEY AUTOINCREMENT, 
+        path TEXT NOT NULL UNIQUE
+        )",
+        )
+        .await;
+    if is_new_db {
+        let default_path = if cfg!(windows) { "C:\\" } else { "/" };
+        println!("default path is {}", default_path);
+        let insert_query = format!(
+            "insert  into config (config_key, config_value) values ('config_root_path', '{}')",
+            default_path
+        );
+        println!("insert query is {}", insert_query);
+        let _ = connection.execute(insert_query.as_str()).await;
+    }
     let sqlite_pool = SqlitePool::connect(db_path).await?;
     Ok(sqlite_pool)
 }

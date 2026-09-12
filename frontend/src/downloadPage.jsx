@@ -19,6 +19,7 @@ export default function DownloadPage() {
   const location = useLocation();
 
   const [data, setData] = useState([]);
+  const [recentPaths, setRecentPaths] = useState([]);
 
   useEffect(() => {
     loadPage();
@@ -34,18 +35,32 @@ export default function DownloadPage() {
     if (path) {
       finalPath = "?path=" + path;
     }
-    const { response_code, response_msg } = (
-      await axios({
+    const [pathRes, recentRes] = await Promise.all([
+      axios({
         url: "/path" + finalPath,
         method: "GET",
         baseURL: getBaseUrl(),
-      })
-    ).data;
+      }),
+      axios({
+        url: "/recentPath",
+        method: "GET",
+        baseURL: getBaseUrl(),
+      }).catch(() => null),
+    ]);
 
+    const { response_code, response_msg } = pathRes.data;
     if (response_code === 0) {
       const final = response_msg.sort((a, b) => (a.is_dir > b.is_dir ? -1 : 1));
       setData(final);
     }
+
+    if (recentRes && recentRes.data.response_code === 0) {
+      setRecentPaths(recentRes.data.response_msg);
+    }
+  };
+
+  const handleRecentPathClick = (path) => {
+    navigate("/downloadPage?path=" + path);
   };
 
   const handleDownloadClick = async (pathname, isDir) => {
@@ -129,6 +144,10 @@ export default function DownloadPage() {
     }
   };
 
+  const visibleRecentPaths = recentPaths.filter(
+    (item) => item !== searchParams.get("path")
+  );
+
   return (
     <div className="flex flex-col overflow-auto p-5">
       <dialog
@@ -196,6 +215,21 @@ export default function DownloadPage() {
             <path d="M5 10h11a4 4 0 1 1 0 8h-1" />
           </svg>
           <span className="font-bold">返回上一级</span>
+        </div>
+      )}
+
+      {visibleRecentPaths.length > 0 && (
+        <div className="flex flex-row items-center gap-1 mb-4 overflow-x-auto pb-1">
+          <span className="text-sm opacity-60 shrink-0 font-bold">最近访问</span>
+          {visibleRecentPaths.map((item) => (
+            <button
+              key={item}
+              className="btn btn-ghost btn-sm shrink-0 whitespace-nowrap font-normal"
+              onClick={() => handleRecentPathClick(item)}
+            >
+              {item.split(",").join("/")}
+            </button>
+          ))}
         </div>
       )}
 
